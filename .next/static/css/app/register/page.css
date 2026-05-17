@@ -1,0 +1,160 @@
+/*!*********************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[13].oneOf[7].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[13].oneOf[7].use[3]!./app/login/auth.module.css ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************/
+.auth_page___7q_R {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  padding: 24px;
+
+  /* Subtle radial glow */
+  background-image: radial-gradient(
+    ellipse 60% 50% at 50% -10%,
+    rgba(45, 212, 191, 0.06) 0%,
+    transparent 60%
+  );
+}
+
+.auth_card__FhJSp {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
+  padding: 40px 36px;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth_brand__340R_ {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.auth_brandName__M4spl {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+.auth_title__c_U4w {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.auth_subtitle__e_Yxd {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.auth_errorBanner__8Ti0O {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: var(--danger);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.auth_form__L15ei {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth_field__dCS9n {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth_label__D8CoC {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.auth_input__7I8Bz {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-normal);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.auth_input__7I8Bz::placeholder {
+  color: var(--text-muted);
+}
+
+.auth_input__7I8Bz:focus {
+  border-color: rgba(45, 212, 191, 0.4);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.06);
+}
+
+.auth_btn__U2N94 {
+  margin-top: 4px;
+  width: 100%;
+  padding: 11px;
+  background: var(--accent);
+  color: #0a1a18;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+  transition: opacity 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+}
+
+.auth_btn__U2N94:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.auth_btn__U2N94:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth_btn__U2N94:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth_switchLink__cQjr_ {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.auth_link__YGsBm {
+  color: var(--accent);
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.auth_link__YGsBm:hover {
+  opacity: 0.75;
+}
+
