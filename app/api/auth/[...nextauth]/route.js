@@ -22,11 +22,6 @@ export const authOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.password)
         if (!isValid) throw new Error('Incorrect password')
 
-        await User.findByIdAndUpdate(user._id, {
-          status: 'online',
-          lastSeen: new Date(),
-        })
-
         return {
           id: user._id.toString(),
           name: user.name,
