@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.10.0",
     "date-fns": "^3.6.0",
+    "emoji-picker-react": "^4.19.1",
     "mongoose": "^8.3.4",
     "next": "14.2.3",
     "next-auth": "^4.24.7",

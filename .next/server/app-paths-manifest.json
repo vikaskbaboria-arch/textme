@@ -1,9 +1,10 @@
 {
-  "/conversations/[id]/page": "app/conversations/[id]/page.js",
-  "/api/messages/route": "app/api/messages/route.js",
-  "/page": "app/page.js",
   "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/conversations/[id]/page": "app/conversations/[id]/page.js",
+  "/api/profile/route": "app/api/profile/route.js",
+  "/profile/page": "app/profile/page.js",
   "/api/conversations/route": "app/api/conversations/route.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/register/page": "app/register/page.js"
+  "/api/messages/route": "app/api/messages/route.js",
+  "/api/conversations/[id]/route": "app/api/conversations/[id]/route.js"
 }

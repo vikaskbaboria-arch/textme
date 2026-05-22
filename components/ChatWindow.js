@@ -2,8 +2,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { getPusherClient } from '@/lib/pusher'
+import dynamic from 'next/dynamic'
 import MessageBubble from './MessageBubble'
+import GroupInfoPanel from './GroupInfoPanel'
+import EmojiPickerPopup from './EmojiPickerPopup'
 import styles from './ChatWindow.module.css'
+
+const ACCEPTED = 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime'
 
 export default function ChatWindow({ conversationId }) {
   const { data: session } = useSession()
@@ -13,24 +18,22 @@ export default function ChatWindow({ conversationId }) {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
+  const [showGroupInfo, setShowGroupInfo] = useState(false)
+  const [showEmoji, setShowEmoji] = useState(false)
+  const [uploadPreview, setUploadPreview] = useState(null) // { file, previewUrl, type }
+  const [uploading, setUploading] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+  const fileInputRef = useRef(null)
   const typingTimeoutRef = useRef(null)
 
-  // Fetch conversation details
-  useEffect(() => {
-    async function fetchConversation() {
-      const res = await fetch('/api/conversations')
-      if (res.ok) {
-        const convs = await res.json()
-        const conv = convs.find(c => c._id === conversationId)
-        setConversation(conv)
-      }
-    }
-    fetchConversation()
+  const fetchConversation = useCallback(async () => {
+    const res = await fetch(`/api/conversations/${conversationId}`)
+    if (res.ok) setConversation(await res.json())
   }, [conversationId])
 
-  // Fetch messages
+  useEffect(() => { fetchConversation() }, [fetchConversation])
+
   const fetchMessages = useCallback(async () => {
     setLoading(true)
     const res = await fetch(`/api/messages?conversationId=${conversationId}`)
@@ -41,67 +44,111 @@ export default function ChatWindow({ conversationId }) {
     setLoading(false)
   }, [conversationId])
 
-  useEffect(() => {
-    fetchMessages()
-  }, [fetchMessages])
+  useEffect(() => { fetchMessages() }, [fetchMessages])
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Pusher subscription
   useEffect(() => {
     if (!conversationId) return
-
     const pusher = getPusherClient()
     const channel = pusher.subscribe(`conversation-${conversationId}`)
-
     channel.bind('new-message', ({ message }) => {
       setMessages(prev => {
-        // Avoid duplicates
         if (prev.some(m => m._id === message._id)) return prev
         return [...prev, message]
       })
     })
-
-    channel.bind('user-typing', ({ userId, name }) => {
+    channel.bind('user-typing', ({ userId }) => {
       if (userId !== session?.user?.id) {
         setIsTyping(true)
         clearTimeout(typingTimeoutRef.current)
         typingTimeoutRef.current = setTimeout(() => setIsTyping(false), 3000)
       }
     })
-
     return () => {
       channel.unbind_all()
       pusher.unsubscribe(`conversation-${conversationId}`)
     }
   }, [conversationId, session?.user?.id])
 
-  async function sendMessage(e) {
-    e?.preventDefault()
+  async function sendTextMessage() {
     const text = input.trim()
     if (!text || sending) return
-
     setInput('')
     setSending(true)
-
     await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conversationId, content: text }),
+      body: JSON.stringify({ conversationId, content: text, type: 'text' }),
     })
-
     setSending(false)
     inputRef.current?.focus()
+  }
+
+  async function sendMediaMessage() {
+    if (!uploadPreview || uploading) return
+    setUploading(true)
+
+    try {
+      // 1. Upload to Cloudinary
+      const formData = new FormData()
+      formData.append('file', uploadPreview.file)
+      formData.append('folder', 'textme/media')
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+      if (!uploadRes.ok) throw new Error('Upload failed')
+      const uploaded = await uploadRes.json()
+
+      // 2. Send message with media URL
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId,
+          content: input.trim(),
+          type: uploaded.resourceType,
+          mediaUrl: uploaded.url,
+          mediaType: uploaded.resourceType,
+          mediaWidth: uploaded.width,
+          mediaHeight: uploaded.height,
+          mediaDuration: uploaded.duration,
+        }),
+      })
+
+      setInput('')
+      setUploadPreview(null)
+    } catch (err) {
+      console.error(err)
+    }
+    setUploading(false)
   }
 
   function handleKeyDown(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendMessage()
+      if (uploadPreview) sendMediaMessage()
+      else sendTextMessage()
     }
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const isVideo = file.type.startsWith('video/')
+    const previewUrl = URL.createObjectURL(file)
+    setUploadPreview({ file, previewUrl, type: isVideo ? 'video' : 'image' })
+    e.target.value = ''
+  }
+
+  function removePreview() {
+    if (uploadPreview?.previewUrl) URL.revokeObjectURL(uploadPreview.previewUrl)
+    setUploadPreview(null)
+  }
+
+  function appendEmoji(emoji) {
+    setInput(prev => prev + emoji)
+    inputRef.current?.focus()
   }
 
   function getOtherParticipant() {
@@ -113,13 +160,9 @@ export default function ChatWindow({ conversationId }) {
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
   }
 
-  const other = getOtherParticipant()
-
-  // Group messages by date
-  function groupMessages() {
+  function groupByDate() {
     const groups = []
     let lastDate = null
-
     messages.forEach(msg => {
       const date = new Date(msg.createdAt).toDateString()
       if (date !== lastDate) {
@@ -128,7 +171,6 @@ export default function ChatWindow({ conversationId }) {
       }
       groups.push({ type: 'message', data: msg, key: msg._id })
     })
-
     return groups
   }
 
@@ -137,119 +179,204 @@ export default function ChatWindow({ conversationId }) {
     const today = new Date()
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
-
     if (d.toDateString() === today.toDateString()) return 'Today'
     if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
   }
 
+  const isGroup = conversation?.type === 'group'
+  const other = !isGroup ? getOtherParticipant() : null
+  const headerName = isGroup ? conversation?.name : other?.name
+  const headerAvatar = isGroup ? conversation?.avatar : other?.avatar
+  const headerSub = isGroup
+    ? `${conversation?.participants?.length || 0} members`
+    : other?.status === 'online' ? 'Active now' : 'Offline'
+
+  const canSend = uploadPreview ? !uploading : !!input.trim() && !sending
+
   return (
-    <div className={styles.chatWindow}>
-      {/* Header */}
-      <div className={styles.header}>
-        {other && (
-          <>
+    <div className={styles.windowWrap}>
+      <div className={styles.chatWindow}>
+        {/* Header */}
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
             <div className={styles.headerAvatar}>
-              {other.avatar
-                ? <img src={other.avatar} alt={other.name} />
-                : <span>{getInitials(other.name)}</span>
+              {isGroup
+                ? headerAvatar
+                  ? <span className={styles.groupAvatarEmoji}>{headerAvatar}</span>
+                  : <span>{getInitials(headerName)}</span>
+                : other?.avatar
+                  ? <img src={other.avatar} alt={other.name} />
+                  : <span>{getInitials(other?.name || '')}</span>
               }
-              <span className={`${styles.headerStatus} ${ other.status || 'offline'}`} />
+              {!isGroup && (
+                <span className={`${styles.headerStatus} ${styles[other?.status || 'offline']}`} />
+              )}
             </div>
             <div className={styles.headerInfo}>
-              <span className={styles.headerName}>{other.name}</span>
-              <span className={styles.headerSub}>
-                {other.status === 'online' ? 'Active now' : 'Offline'}
-              </span>
+              <span className={styles.headerName}>{headerName}</span>
+              <span className={styles.headerSub}>{headerSub}</span>
             </div>
-          </>
-        )}
-        <div className={styles.headerActions}>
-          <button className={styles.headerBtn} title="Search in conversation">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </button>
-          <button className={styles.headerBtn} title="More options">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="5" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="19" r="1" fill="currentColor" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className={styles.messages}>
-        {loading ? (
-          <div className={styles.loadingCenter}>
-            <span className="spinner" />
           </div>
-        ) : messages.length === 0 ? (
-          <div className={styles.emptyChat}>
-            <div className={styles.emptyChatAvatar}>
-              {other?.avatar
-                ? <img src={other?.avatar} alt={other?.name} />
-                : <span>{getInitials(other?.name || '')}</span>
-              }
-            </div>
-            <p className={styles.emptyChatName}>{other?.name}</p>
-            <p className={styles.emptyChatHint}>Send a message to start the conversation</p>
-          </div>
-        ) : (
-          <>
-            {groupMessages().map(item => {
-              if (item.type === 'date') {
-                return (
-                  <div key={item.key} className={styles.dateSeparator}>
-                    <span>{formatDateLabel(item.date)}</span>
-                  </div>
-                )
-              }
-              return (
-                <MessageBubble
-                  key={item.key}
-                  message={item.data}
-                  isOwn={item.data.sender?._id === session?.user?.id || item.data.sender === session?.user?.id}
-                />
-              )
-            })}
-
-            {isTyping && (
-              <div className={styles.typingIndicator}>
-                <span /><span /><span />
-              </div>
+          <div className={styles.headerActions}>
+            {isGroup && (
+              <button
+                className={`${styles.headerBtn} ${showGroupInfo ? styles.headerBtnActive : ''}`}
+                title="Group info"
+                onClick={() => setShowGroupInfo(p => !p)}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+              </button>
             )}
-          </>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className={styles.messages}>
+          {loading ? (
+            <div className={styles.loadingCenter}><span className="spinner" /></div>
+          ) : messages.length === 0 ? (
+            <div className={styles.emptyChat}>
+              <div className={styles.emptyChatAvatar}>
+                {isGroup
+                  ? headerAvatar ? <span style={{fontSize:28}}>{headerAvatar}</span> : <span>{getInitials(headerName || '')}</span>
+                  : other?.avatar ? <img src={other.avatar} alt={other.name} /> : <span>{getInitials(other?.name || '')}</span>
+                }
+              </div>
+              <p className={styles.emptyChatName}>{headerName}</p>
+              <p className={styles.emptyChatHint}>
+                {isGroup ? `This is the beginning of ${conversation?.name}` : 'Send a message to start the conversation'}
+              </p>
+            </div>
+          ) : (
+            <>
+              {groupByDate().map(item => {
+                if (item.type === 'date') return (
+                  <div key={item.key} className={styles.dateSeparator}><span>{formatDateLabel(item.date)}</span></div>
+                )
+                const isOwn = item.data.sender?._id === session?.user?.id || item.data.sender === session?.user?.id
+                return (
+                  <MessageBubble
+                    key={item.key}
+                    message={item.data}
+                    isOwn={isOwn}
+                    showSender={isGroup && !isOwn}
+                    isSystemMsg={item.data.type === 'system'}
+                  />
+                )
+              })}
+              {isTyping && (
+                <div className={styles.typingIndicator}><span /><span /><span /></div>
+              )}
+            </>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Upload preview */}
+        {uploadPreview && (
+          <div className={styles.uploadPreview}>
+            <div className={styles.previewMedia}>
+              {uploadPreview.type === 'image'
+                ? <img src={uploadPreview.previewUrl} alt="Preview" />
+                : <video src={uploadPreview.previewUrl} />
+              }
+              <div className={styles.previewType}>
+                {uploadPreview.type === 'video' ? '▶ Video' : '🖼 Image'}
+              </div>
+            </div>
+            <button className={styles.previewRemove} onClick={removePreview} title="Remove">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
         )}
-        <div ref={messagesEndRef} />
+
+        {/* Input area */}
+        <div className={styles.inputArea}>
+          <div className={styles.inputRow}>
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED}
+              className={styles.hiddenInput}
+              onChange={handleFileChange}
+            />
+
+            {/* Attachment button */}
+            <button
+              className={styles.toolBtn}
+              onClick={() => fileInputRef.current?.click()}
+              title="Attach image or video"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </button>
+
+            {/* Input wrap */}
+            <div className={styles.inputWrap}>
+              <textarea
+                ref={inputRef}
+                className={styles.input}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={uploadPreview ? 'Add a caption…' : `Message ${headerName || ''}…`}
+                rows={1}
+                style={{ resize: 'none' }}
+              />
+
+              {/* Emoji button */}
+              <div className={styles.emojiWrap}>
+                <button
+                  className={`${styles.emojiBtn} ${showEmoji ? styles.emojiBtnActive : ''}`}
+                  onClick={() => setShowEmoji(p => !p)}
+                  title="Emoji"
+                  type="button"
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                  </svg>
+                </button>
+                {showEmoji && (
+                  <EmojiPickerPopup
+                    onSelect={appendEmoji}
+                    onClose={() => setShowEmoji(false)}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Send button */}
+            <button
+              className={`${styles.sendBtn} ${canSend ? styles.sendActive : ''}`}
+              onClick={uploadPreview ? sendMediaMessage : sendTextMessage}
+              disabled={!canSend}
+            >
+              {uploading
+                ? <span className="spinner" style={{width:14,height:14,borderTopColor:'#0a1a18'}} />
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" stroke="none" />
+                  </svg>
+              }
+            </button>
+          </div>
+          <p className={styles.inputHint}>Enter to send · Shift+Enter for new line</p>
+        </div>
       </div>
 
-      {/* Input area */}
-      <div className={styles.inputArea}>
-        <div className={styles.inputWrap}>
-          <textarea
-            ref={inputRef}
-            className={styles.input}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message ${other?.name || ''}…`}
-            rows={1}
-            style={{ resize: 'none' }}
-          />
-          <button
-            className={`${styles.sendBtn} ${input.trim() ? styles.sendActive : ''}`}
-            onClick={sendMessage}
-            disabled={!input.trim() || sending}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
-        </div>
-        <p className={styles.inputHint}>Enter to send · Shift+Enter for new line</p>
-      </div>
+      {isGroup && showGroupInfo && conversation && (
+        <GroupInfoPanel
+          conversation={conversation}
+          onClose={() => setShowGroupInfo(false)}
+          onUpdated={(updated) => setConversation(updated)}
+        />
+      )}
     </div>
   )
 }

@@ -156,6 +156,26 @@
   display: block;
 }
 
+.groupEmoji {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.groupBadge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--bg-active);
+  border: 1.5px solid var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
 /* Empty */
 .empty {
   padding: 40px 16px;

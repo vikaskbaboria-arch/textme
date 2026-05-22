@@ -121,7 +121,10 @@ export default function ConversationList() {
           </div>
         ) : (
           filtered.map(conv => {
-            const other = getOtherParticipant(conv)
+            const isGroup = conv.type === 'group'
+            const other = !isGroup ? getOtherParticipant(conv) : null
+            const displayName = isGroup ? conv.name : other?.name
+            const displayAvatar = isGroup ? conv.avatar : other?.avatar
             const isActive = pathname === `/conversations/${conv._id}`
             const lastMsg = conv.lastMessage
 
@@ -132,26 +135,41 @@ export default function ConversationList() {
                 onClick={() => router.push(`/conversations/${conv._id}`)}
               >
                 <div className={styles.itemAvatar}>
-                  {other?.avatar
-                    ? <img src={other.avatar} alt={other.name} />
-                    : <span>{getInitials(other?.name)}</span>
+                  {isGroup
+                    ? displayAvatar
+                      ? <span className={styles.groupEmoji}>{displayAvatar}</span>
+                      : <span>{getInitials(displayName)}</span>
+                    : displayAvatar
+                      ? <img src={displayAvatar} alt={displayName} />
+                      : <span>{getInitials(displayName)}</span>
                   }
-                  <span className={`${styles.statusDot} ${styles[other?.status || 'offline']}`} />
+                  {!isGroup && (
+                    <span className={`${styles.statusDot} ${styles[other?.status || 'offline']}`} />
+                  )}
+                  {isGroup && (
+                    <span className={styles.groupBadge}>
+                      <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                    </span>
+                  )}
                 </div>
 
                 <div className={styles.itemContent}>
                   <div className={styles.itemTop}>
-                    <span className={styles.itemName}>{other?.name || 'Unknown'}</span>
+                    <span className={styles.itemName}>{displayName || 'Unknown'}</span>
                     {lastMsg?.createdAt && (
                       <span className={styles.itemTime}>{formatTime(lastMsg.createdAt)}</span>
                     )}
                   </div>
                   <span className={styles.itemPreview}>
                     {lastMsg
-                      ? lastMsg.sender?.name === session?.user?.name
-                        ? `You: ${lastMsg.content}`
-                        : lastMsg.content
-                      : 'Start a conversation'
+                      ? lastMsg.type === 'system'
+                        ? lastMsg.content
+                        : lastMsg.sender?.name === session?.user?.name
+                          ? `You: ${lastMsg.content}`
+                          : isGroup
+                            ? `${lastMsg.sender?.name?.split(' ')[0]}: ${lastMsg.content}`
+                            : lastMsg.content
+                      : isGroup ? 'Group created' : 'Start a conversation'
                     }
                   </span>
                 </div>

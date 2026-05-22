@@ -6,12 +6,40 @@
   margin-bottom: 2px;
 }
 
-.rowOwn {
-  flex-direction: row-reverse;
+.rowOwn { flex-direction: row-reverse; }
+.rowOther { flex-direction: row; }
+
+/* System message */
+.systemMsg {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+.systemMsg span {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 3px 12px;
+  border-radius: var(--r-full);
 }
 
-.rowOther {
-  flex-direction: row;
+.bubbleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 65%;
+}
+
+.rowOwn .bubbleWrap {
+  align-items: flex-end;
+}
+
+.senderName {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  padding-left: 2px;
 }
 
 .avatar {
@@ -38,7 +66,6 @@
 }
 
 .bubble {
-  max-width: 65%;
   padding: 9px 14px;
   border-radius: 16px;
   position: relative;
@@ -91,4 +118,149 @@
   display: flex;
   align-items: center;
   color: #0a1a18;
+}
+
+/* ── Media bubbles ───────────────────────────────────────────── */
+.mediaBubble {
+  max-width: 280px;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid transparent;
+  transition: transform .15s, box-shadow .15s;
+}
+.mediaBubble:hover { transform: scale(1.01); box-shadow: var(--shadow-md); }
+.mediaBubbleOwn  { border-color: rgba(45,212,191,.2); }
+.mediaBubbleOther { border-color: var(--border-subtle); }
+
+.imageWrap { position: relative; }
+.mediaImg {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+}
+
+.mediaOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity .15s, background .15s;
+  border-radius: 12px 12px 0 0;
+}
+.imageWrap:hover .mediaOverlay {
+  opacity: 1;
+  background: rgba(0,0,0,0.28);
+}
+
+.videoWrap { position: relative; }
+.mediaVideo {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  object-fit: cover;
+  pointer-events: none;
+  border-radius: 12px 12px 0 0;
+}
+.videoPlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.4);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  transition: background .15s;
+}
+.videoWrap:hover .videoPlay { background: rgba(0,0,0,0.55); }
+
+.videoDuration {
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0,0,0,0.5);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.mediaCaption {
+  padding: 7px 12px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  word-break: break-word;
+  background: var(--bg-elevated);
+}
+.mediaBubbleOwn .mediaCaption { background: rgba(45,212,191,.08); color: #0a1a18; }
+
+.metaMedia {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 4px 10px 8px;
+  background: var(--bg-elevated);
+}
+.mediaBubbleOwn .metaMedia { background: rgba(45,212,191,.08); }
+.mediaBubbleOwn .time { color: rgba(10,26,24,.55); }
+.mediaBubbleOwn .readCheck { color: rgba(10,26,24,.55); }
+
+/* ── Hover share action ───────────────────────────────────────── */
+.bubbleGroup {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* own messages: share btn on left, bubble on right */
+.rowOwn .bubbleGroup { flex-direction: row; }
+/* other messages: bubble on left, share btn on right */
+.rowOther .bubbleGroup { flex-direction: row-reverse; }
+
+.actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity .15s;
+  flex-shrink: 0;
+  margin-bottom: 6px;
+}
+
+.bubbleGroup:hover .actions { opacity: 1; }
+
+.shareWrap {
+  position: relative;
+}
+
+.actionBtn {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  transition: color .12s, background .12s, border-color .12s;
+}
+.actionBtn:hover, .actionBtnActive {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: rgba(45,212,191,.25);
+}
+
+/* Position share menu based on bubble side */
+.rowOther .shareWrap > div {
+  left: auto;
+  right: 0;
+}
+.rowOwn .shareWrap > div {
+  right: auto;
+  left: 0;
 }

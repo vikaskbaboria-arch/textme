@@ -1,0 +1,204 @@
+.menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 300px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-normal);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 300;
+  overflow: hidden;
+}
+
+/* Own messages: flip menu to right side (opens leftward from share btn) */
+.menuOwn {
+  left: auto;
+  right: 0;
+}
+
+/* Preview */
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.previewThumb {
+  width: 44px; height: 44px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-active);
+}
+.previewThumb img,
+.previewThumb video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.previewText {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* Link row */
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.linkBox {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  overflow: hidden;
+}
+
+.linkText {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  font-family: monospace;
+}
+
+.linkPlaceholder {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.linkError { font-size: 11px; color: var(--danger); }
+
+.copyBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(45,212,191,.2);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.copyBtn:hover:not(:disabled) { background: rgba(45,212,191,.22); }
+.copyBtn:disabled { opacity: .5; cursor: not-allowed; }
+.copyBtnDone {
+  background: rgba(52,211,153,.12);
+  color: var(--success);
+  border-color: rgba(52,211,153,.2);
+}
+
+/* Options */
+.options {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: background .12s, color .12s;
+}
+.option:hover { background: var(--bg-hover); color: var(--text-primary); }
+.option:disabled { opacity: .5; cursor: not-allowed; }
+
+.optionIcon {
+  width: 28px; height: 28px;
+  border-radius: var(--r-sm);
+  background: var(--bg-active);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.optionLabel { flex: 1; }
+
+.optionNative {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4px;
+  padding-top: 10px;
+  color: var(--text-muted);
+}
+
+/* Email section */
+.emailSection { display: flex; flex-direction: column; }
+
+.emailInput {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  background: var(--bg-input);
+  border-radius: var(--r-sm);
+  margin: 0 2px 2px;
+  border: 1px solid var(--border-subtle);
+}
+
+.emailField {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-body);
+  padding: 4px 0;
+}
+.emailField::placeholder { color: var(--text-muted); }
+
+.emailSendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px;
+  background: var(--accent);
+  color: #0a1a18;
+  border-radius: var(--r-xs);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  transition: opacity .15s;
+}
+.emailSendBtn:hover { opacity: .85; }
+.emailSendBtn:disabled { opacity: .5; }
+
+.emailHint {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}

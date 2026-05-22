@@ -1,13 +1,18 @@
 'use client'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import ConversationList from './ConversationList'
 import NewConversationModal from './NewConversationModal'
+import CreateGroupModal from './CreateGroupModal'
 import styles from './Sidebar.module.css'
 
 export default function Sidebar() {
   const { data: session } = useSession()
-  const [showModal, setShowModal] = useState(false)
+  const router = useRouter()
+  const [showMenu, setShowMenu] = useState(false)
+  const [showDM, setShowDM] = useState(false)
+  const [showGroup, setShowGroup] = useState(false)
 
   function getInitials(name = '') {
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -30,16 +35,32 @@ export default function Sidebar() {
             <span className={styles.brandName}>textMe</span>
           </div>
 
-          <button
-            className={styles.newBtn}
-            onClick={() => setShowModal(true)}
-            title="New conversation"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
+          <div className={styles.headerActions}>
+            <div className={styles.newBtnWrap}>
+              <button
+                className={styles.newBtn}
+                onClick={() => setShowMenu(p => !p)}
+                title="New"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              {showMenu && (
+                <div className={styles.newMenu}>
+                  <button className={styles.newMenuItem} onClick={() => { setShowDM(true); setShowMenu(false) }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    New message
+                  </button>
+                  <button className={styles.newMenuItem} onClick={() => { setShowGroup(true); setShowMenu(false) }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    New group
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Conversations */}
@@ -47,16 +68,18 @@ export default function Sidebar() {
 
         {/* User profile footer */}
         <div className={styles.footer}>
-          <div className={styles.avatar}>
-            {session?.user?.avatar
-              ? <img src={session.user.avatar} alt={session.user.name} />
-              : <span>{getInitials(session?.user?.name)}</span>
-            }
-          </div>
-          <div className={styles.userInfo}>
-            <span className={styles.userName}>{session?.user?.name}</span>
-            <span className={styles.userEmail}>{session?.user?.email}</span>
-          </div>
+          <button className={styles.footerProfile} onClick={() => router.push('/profile')} title="Edit profile">
+            <div className={styles.avatar}>
+              {session?.user?.avatar
+                ? <img src={session.user.avatar} alt={session.user.name} />
+                : <span>{getInitials(session?.user?.name)}</span>
+              }
+            </div>
+            <div className={styles.userInfo}>
+              <span className={styles.userName}>{session?.user?.name}</span>
+              <span className={styles.userEmail}>{session?.user?.email}</span>
+            </div>
+          </button>
           <button
             className={styles.signOutBtn}
             onClick={() => signOut({ callbackUrl: '/login' })}
@@ -71,9 +94,8 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {showModal && (
-        <NewConversationModal onClose={() => setShowModal(false)} />
-      )}
+      {showDM && <NewConversationModal onClose={() => setShowDM(false)} />}
+      {showGroup && <CreateGroupModal onClose={() => setShowGroup(false)} />}
     </>
   )
 }

@@ -1,0 +1,36 @@
+.popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 500;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-normal);
+}
+
+.loading {
+  width: 320px;
+  height: 380px;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override emoji-picker-react dark theme to match our palette */
+.popup :global(.EmojiPickerReact) {
+  --epr-bg-color: var(--bg-elevated) !important;
+  --epr-category-label-bg-color: var(--bg-elevated) !important;
+  --epr-text-color: var(--text-primary) !important;
+  --epr-search-input-bg-color: var(--bg-input) !important;
+  --epr-search-input-text-color: var(--text-primary) !important;
+  --epr-search-input-placeholder-color: var(--text-muted) !important;
+  --epr-search-border-color: var(--border-normal) !important;
+  --epr-hover-bg-color: var(--bg-hover) !important;
+  --epr-focus-bg-color: var(--bg-active) !important;
+  --epr-border-color: var(--border-subtle) !important;
+  --epr-highlight-color: var(--accent) !important;
+  font-family: var(--font-body) !important;
+  border: none !important;
+}
