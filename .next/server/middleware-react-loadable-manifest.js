@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST="{\"components\\\\EmojiPickerPopup.js -> emoji-picker-react\":{\"id\":\"components\\\\EmojiPickerPopup.js -> emoji-picker-react\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_emoji-picker-react_dist_emoji-picker-react_esm_js.js\"]}}"
