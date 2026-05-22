@@ -14,12 +14,22 @@ export default function RegisterPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
+    const trimmedName = form.name.trim()
+    if (!trimmedName || trimmedName.length < 2) {
+      setError('Name must be at least 2 characters')
+      return
+    }
+    if (/\d/.test(trimmedName)) {
+      setError('Name cannot contain numbers')
+      return
+    }
+
+    setLoading(true)
     const res = await fetch('/api/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, name: trimmedName }),
     })
 
     if (!res.ok) {

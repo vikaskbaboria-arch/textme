@@ -13,6 +13,15 @@ export async function POST(req) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
+    const trimmedName = String(name).trim()
+    if (trimmedName.length < 2) {
+      return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 })
+    }
+
+    if (/\d/.test(trimmedName)) {
+      return NextResponse.json({ error: 'Name cannot contain numbers' }, { status: 400 })
+    }
+
     const existing = await User.findOne({ email: email.toLowerCase() })
     if (existing) {
       return NextResponse.json({ error: 'Email already in use' }, { status: 409 })
