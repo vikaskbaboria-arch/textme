@@ -120,6 +120,21 @@
   color: #0a1a18;
 }
 
+/* ── Message actions ─────────────────────────────────────────── */
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: inherit;
+  opacity: 0.75;
+  transition: opacity .15s, transform .15s;
+}
+.deleteBtn:hover { opacity: 1; transform: scale(1.04); }
+.deleteBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
 /* ── Audio bubbles ───────────────────────────────────────────── */
 .audioBubble {
   width: 100%;

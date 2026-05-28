@@ -64,6 +64,11 @@ export default function ChatWindow({ conversationId }) {
         return [...prev, message]
       })
     })
+    channel.bind('message-deleted', ({ messageId }) => {
+      setMessages(prev => prev.map(msg =>
+        msg._id === messageId ? { ...msg, deleted: true, content: '', mediaUrl: null, mediaType: null } : msg
+      ))
+    })
     channel.bind('user-typing', ({ userId }) => {
       if (userId !== session?.user?.id) {
         setIsTyping(true)
@@ -171,6 +176,16 @@ export default function ChatWindow({ conversationId }) {
       console.error(err)
     } finally {
       setSending(false)
+    }
+  }
+
+  async function handleDeleteMessage(messageId) {
+    if (!messageId || !window.confirm('Delete this message?')) return
+    const res = await fetch(`/api/messages/${messageId}`, { method: 'DELETE' })
+    if (res.ok) {
+      setMessages(prev => prev.map(msg =>
+        msg._id === messageId ? { ...msg, deleted: true, content: '', mediaUrl: null, mediaType: null } : msg
+      ))
     }
   }
 
@@ -299,6 +314,7 @@ export default function ChatWindow({ conversationId }) {
                     isOwn={isOwn}
                     showSender={isGroup && !isOwn}
                     isSystemMsg={item.data.type === 'system'}
+                    onDelete={handleDeleteMessage}
                   />
                 )
               })}
