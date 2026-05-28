@@ -18,7 +18,7 @@ export async function GET(req) {
     if (!conversationId) return NextResponse.json({ error: 'conversationId required' }, { status: 400 })
     const conversation = await Conversation.findOne({ _id: conversationId, participants: session.user.id })
     if (!conversation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    const query = { conversationId, deleted: false }
+    const query = { conversationId }
     if (cursor) query._id = { $lt: cursor }
     const messages = await Message.find(query)
       .populate('sender', 'name avatar email')

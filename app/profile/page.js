@@ -13,9 +13,10 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ name: '', bio: '' })
+  const [form, setForm] = useState({ name: '', bio: '', status: 'offline' })
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
+  const [removeAvatar, setRemoveAvatar] = useState(false)
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function ProfilePage() {
       if (res.ok) {
         const data = await res.json()
         setProfile(data)
-        setForm({ name: data.name || '', bio: data.bio || '' })
+        setForm({ name: data.name || '', bio: data.bio || '', status: data.status || 'offline' })
       }
       setLoading(false)
     }
@@ -37,6 +38,7 @@ export default function ProfilePage() {
     if (!file.type.startsWith('image/')) { setError('Please select an image file'); return }
     setAvatarFile(file)
     setAvatarPreview(URL.createObjectURL(file))
+    setRemoveAvatar(false)
     e.target.value = ''
   }
 
@@ -45,7 +47,7 @@ export default function ProfilePage() {
     setSuccess('')
     setSaving(true)
     try {
-      let avatarUrl = profile?.avatar
+      let avatarUrl = removeAvatar ? null : profile?.avatar
 
       // Upload new avatar if selected
       if (avatarFile) {
@@ -63,7 +65,7 @@ export default function ProfilePage() {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, bio: form.bio, avatar: avatarUrl }),
+        body: JSON.stringify({ name: form.name, bio: form.bio, avatar: avatarUrl, status: form.status }),
       })
 
       if (!res.ok) {
@@ -74,10 +76,11 @@ export default function ProfilePage() {
       const updated = await res.json()
       setProfile(updated)
       setAvatarFile(null)
+      setRemoveAvatar(false)
       if (avatarPreview) { URL.revokeObjectURL(avatarPreview); setAvatarPreview(null) }
 
       // Update NextAuth session
-      await updateSession({ name: updated.name, avatar: updated.avatar })
+      await updateSession({ name: updated.name, avatar: updated.avatar, bio: updated.bio, status: updated.status })
 
       setSuccess('Profile updated!')
       setTimeout(() => setSuccess(''), 3000)
@@ -93,7 +96,7 @@ export default function ProfilePage() {
   }
 
   const displayAvatar = avatarPreview || profile?.avatar
-  const hasChanges = form.name !== profile?.name || form.bio !== (profile?.bio || '') || avatarFile
+  const hasChanges = form.name !== profile?.name || form.bio !== (profile?.bio || '') || form.status !== (profile?.status || 'offline') || avatarFile || removeAvatar
 
   if (loading) return (
     <div className={styles.loadingPage}>
@@ -151,7 +154,7 @@ export default function ProfilePage() {
                   <button className={styles.removeAvatarBtn} onClick={() => {
                     setAvatarFile(null)
                     setAvatarPreview(null)
-                    setForm(p => ({ ...p }))
+                    setRemoveAvatar(true)
                   }}>
                     Remove
                   </button>
@@ -188,6 +191,19 @@ export default function ProfilePage() {
                 disabled
               />
               <p className={styles.fieldNote}>Email cannot be changed</p>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Status</label>
+              <select
+                className={styles.input}
+                value={form.status}
+                onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+              >
+                <option value="online">Online</option>
+                <option value="away">Away</option>
+                <option value="offline">Offline</option>
+              </select>
             </div>
 
             <div className={styles.field}>

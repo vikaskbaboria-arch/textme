@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import styles from './GroupInfoPanel.module.css'
@@ -16,9 +16,18 @@ export default function GroupInfoPanel({ conversation, onClose, onUpdated }) {
   const [error, setError] = useState('')
   const [showAddSearch, setShowAddSearch] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const avatarInputRef = useRef(null)
 
   const isAdmin = conversation?.admin?._id === session?.user?.id ||
                   conversation?.admin === session?.user?.id
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
 
   useEffect(() => {
     if (!query || query.length < 2) { setSearchResults([]); return }
@@ -65,6 +74,52 @@ export default function GroupInfoPanel({ conversation, onClose, onUpdated }) {
     if (updated) setEditName(false)
   }
 
+  function handleAvatarChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file for the group photo')
+      return
+    }
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+    e.target.value = ''
+  }
+
+  async function saveAvatar() {
+    if (!avatarFile) return
+    setLoading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', avatarFile)
+      fd.append('folder', 'textme/group-avatars')
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!uploadRes.ok) throw new Error('Group photo upload failed')
+      const uploaded = await uploadRes.json()
+      const updated = await callPatch({ action: 'update_info', avatar: uploaded.url })
+      if (updated) {
+        setAvatarFile(null)
+        if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+        setAvatarPreview(null)
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update group photo')
+    }
+    setLoading(false)
+  }
+
+  async function removeAvatar() {
+    setLoading(true)
+    const updated = await callPatch({ action: 'update_info', avatar: '' })
+    if (updated) {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+      setAvatarPreview(null)
+      setAvatarFile(null)
+    }
+    setLoading(false)
+  }
+
   async function addMember(user) {
     await callPatch({ action: 'add_member', userId: user._id })
     setQuery('')
@@ -109,11 +164,25 @@ export default function GroupInfoPanel({ conversation, onClose, onUpdated }) {
         {/* Group identity */}
         <div className={styles.groupHero}>
           <div className={styles.groupAvatar}>
-            {conversation?.avatar
-              ? <span className={styles.avatarEmoji}>{conversation.avatar}</span>
+            {avatarPreview || (typeof conversation?.avatar === 'string' && /^https?:\/\//.test(conversation.avatar))
+              ? <img src={avatarPreview || conversation.avatar} alt={conversation?.name || 'Group'} className={styles.avatarImage} />
               : <span className={styles.avatarInitials}>{getInitials(conversation?.name)}</span>
             }
           </div>
+          {isAdmin && (
+            <div className={styles.avatarActions}>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+              />
+              <button className={styles.saveBtn} onClick={() => avatarInputRef.current?.click()} disabled={loading}>Change photo</button>
+              {avatarFile && <button className={styles.secondaryBtn} onClick={saveAvatar} disabled={loading}>Save photo</button>}
+              {conversation?.avatar && !avatarFile && <button className={styles.secondaryBtn} onClick={removeAvatar} disabled={loading}>Remove</button>}
+            </div>
+          )}
           <div className={styles.groupNameRow}>
             {editName && isAdmin ? (
               <div className={styles.nameEditRow}>

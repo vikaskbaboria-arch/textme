@@ -121,6 +121,24 @@
 }
 
 /* ── Message actions ─────────────────────────────────────────── */
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: inherit;
+  opacity: 0.75;
+  transition: opacity .15s, transform .15s;
+}
+.shareBtn:hover { opacity: 1; transform: scale(1.04); }
+
+.shareMenuWrap {
+  position: relative;
+  z-index: 20;
+}
+
 .deleteBtn {
   display: inline-flex;
   align-items: center;
@@ -139,16 +157,84 @@
 .audioBubble {
   width: 100%;
   max-width: 280px;
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 10px 12px 8px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
-.audioBubbleOwn { background: rgba(45,212,191,0.08); border-color: rgba(45,212,191,0.18); }
+.audioBubbleOwn {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.16), rgba(12, 74, 110, 0.12));
+  border-color: rgba(45, 212, 191, 0.22);
+}
 .audioBubbleOther { background: var(--bg-elevated); }
-.audioHeader { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
-.audioPlayer { width: 100%; margin-bottom: 4px; }
-.audioDuration { display: inline-block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.audioHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+.audioHeader::before {
+  content: '🎙';
+  font-size: 12px;
+}
+.audioPlayerCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+}
+.audioPlayBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0ea5a1, #14b8a6);
+  color: #041a18;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 6px 14px rgba(20, 184, 166, 0.25);
+}
+.audioPlayBtnActive { background: linear-gradient(135deg, #22d3ee, #38bdf8); }
+.audioWaveTrack {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.12);
+}
+.audioWaveFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0ea5a1, #22d3ee);
+}
+.audioTimeLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  min-width: 38px;
+  text-align: right;
+}
+.audioDuration {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 2px 7px;
+  margin-top: 6px;
+}
 
 /* ── Media bubbles ───────────────────────────────────────────── */
 .mediaBubble {

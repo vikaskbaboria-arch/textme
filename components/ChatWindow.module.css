@@ -94,7 +94,26 @@
 
 .headerActions {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+}
+
+.compatibilityBtn {
+  border: 1px solid var(--border-normal);
+  border-radius: var(--r-full);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.compatibilityBtn:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+  border-color: rgba(45, 212, 191, 0.35);
 }
 
 .headerBtn {
@@ -240,6 +259,7 @@
 }
 
 .inputWrap {
+
   display: flex;
   align-items: flex-end;
   gap: 10px;
@@ -381,3 +401,202 @@
   transition: background .15s;
 }
 .previewRemove:hover { background: rgba(248,113,113,.2); }
+
+.compatibilityOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 19, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.compatibilityModal {
+  width: min(680px, 100%);
+  max-height: 80vh;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--border-normal);
+  background: var(--bg-surface);
+  box-shadow: 0 24px 48px rgba(8, 13, 20, 0.35);
+}
+
+.compatibilityHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.compatibilityEyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.compatibilityTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.compatibilityClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border-normal);
+  background: var(--bg-active);
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.compatibilityBody {
+  padding: 14px 18px 18px;
+  overflow: auto;
+  max-height: 65vh;
+}
+
+.compatibilityContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.compatibilityHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.compatibilityScoreLabel {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.compatibilityPill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.compatibilityMeter {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-active);
+  overflow: hidden;
+}
+
+.compatibilityMeterFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #14b8a6, #38bdf8);
+}
+
+.compatibilityChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.compatibilityChip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
+.compatibilityCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.compatibilityCard {
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--bg-elevated);
+  padding: 12px;
+}
+
+.compatibilityCardTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.compatibilityCardText {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.compatibilityList,
+.compatibilitySuggestionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.compatibilityList li,
+.compatibilitySuggestionList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.compatibilitySuggestionList li {
+  display: block;
+  background: rgba(45, 212, 191, 0.08);
+  border: 1px solid rgba(45, 212, 191, 0.18);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.compatibilityHint {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.compatibilityJson {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+}

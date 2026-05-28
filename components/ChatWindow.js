@@ -24,6 +24,9 @@ export default function ChatWindow({ conversationId }) {
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false)
+  const [showCompatibilityPopup, setShowCompatibilityPopup] = useState(false)
+  const [compatibilityData, setCompatibilityData] = useState(null)
+  const [compatibilityLoading, setCompatibilityLoading] = useState(false)
   const [uploadPreview, setUploadPreview] = useState(null) // { file, previewUrl, type }
   const [uploading, setUploading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -36,8 +39,36 @@ export default function ChatWindow({ conversationId }) {
     if (res.ok) setConversation(await res.json())
   }, [conversationId])
 
-  useEffect(() => { fetchConversation() }, [fetchConversation])
+  const fetchCompatibility = useCallback(async () => {
+    if (!conversationId || conversation?.type === 'group') return
 
+    setCompatibilityLoading(true)
+    try {
+      const res = await fetch(`/api/compatibility/${conversationId}`)
+      const data = await res.json()
+      if (res.ok) {
+        setCompatibilityData(data)
+      } else {
+        setCompatibilityData({ success: false, message: data?.message || 'Unable to fetch compatibility data.' })
+      }
+    } catch (error) {
+      console.error('Compatibility fetch failed:', error)
+      setCompatibilityData({ success: false, message: 'Compatibility analysis unavailable right now.' })
+    } finally {
+      setCompatibilityLoading(false)
+    }
+  }, [conversation?.type, conversationId])
+
+  useEffect(() => { fetchConversation() }, [fetchConversation])
+  useEffect(() => {
+    const interval = setInterval(() => fetchConversation(), 30000)
+    return () => clearInterval(interval)
+  }, [fetchConversation])
+  useEffect(() => {
+    if (conversation?.type !== 'group') {
+      fetchCompatibility()
+    }
+  }, [conversation?.type, fetchCompatibility])
   const fetchMessages = useCallback(async () => {
     setLoading(true)
     const res = await fetch(`/api/messages?conversationId=${conversationId}`)
@@ -66,7 +97,7 @@ export default function ChatWindow({ conversationId }) {
     })
     channel.bind('message-deleted', ({ messageId }) => {
       setMessages(prev => prev.map(msg =>
-        msg._id === messageId ? { ...msg, deleted: true, content: '', mediaUrl: null, mediaType: null } : msg
+        msg._id === messageId ? { ...msg, deleted: true, content: '' } : msg
       ))
     })
     channel.bind('user-typing', ({ userId }) => {
@@ -184,7 +215,7 @@ export default function ChatWindow({ conversationId }) {
     const res = await fetch(`/api/messages/${messageId}`, { method: 'DELETE' })
     if (res.ok) {
       setMessages(prev => prev.map(msg =>
-        msg._id === messageId ? { ...msg, deleted: true, content: '', mediaUrl: null, mediaType: null } : msg
+        msg._id === messageId ? { ...msg, deleted: true, content: '' } : msg
       ))
     }
   }
@@ -231,11 +262,33 @@ export default function ChatWindow({ conversationId }) {
   const other = !isGroup ? getOtherParticipant() : null
   const headerName = isGroup ? conversation?.name : other?.name
   const headerAvatar = isGroup ? conversation?.avatar : other?.avatar
-  const headerSub = isGroup
+  const isRecentlyActive = !!other?.lastSeen && Date.now() - new Date(other.lastSeen).getTime() < 2 * 60 * 1000
+  const presenceClass = isGroup
+    ? ''
+    : other?.status === 'away'
+      ? 'away'
+      : other?.status === 'online' && isRecentlyActive
+        ? 'online'
+        : 'offline'
+  const presenceLabel = isGroup
     ? `${conversation?.participants?.length || 0} members`
-    : other?.status === 'online' ? 'Active now' : 'Offline'
+    : other?.status === 'away'
+      ? 'Away'
+      : other?.status === 'online' && isRecentlyActive
+        ? 'Active now'
+        : 'Offline'
+  const headerSub = isGroup ? `${conversation?.participants?.length || 0} members` : presenceLabel
 
   const canSend = uploadPreview ? !uploading : !!input.trim() && !sending
+  const compatibilityScore = compatibilityData?.data?.compatibilityScore ?? null
+  const compatibilityDetails = compatibilityData?.data ?? compatibilityData ?? {}
+  const analytics = compatibilityDetails?.analytics ?? {}
+  const suggestions = Array.isArray(compatibilityDetails?.aiSuggestions)
+    ? compatibilityDetails.aiSuggestions.filter(Boolean)
+    : compatibilityDetails?.suggestedReply
+      ? [compatibilityDetails.suggestedReply]
+      : []
+  const scorePercent = Math.max(0, Math.min(100, Number(compatibilityScore ?? 0)))
 
   return (
     <div className={styles.windowWrap}>
@@ -253,7 +306,7 @@ export default function ChatWindow({ conversationId }) {
                   : <span>{getInitials(other?.name || '')}</span>
               }
               {!isGroup && (
-                <span className={`${styles.headerStatus} ${styles[other?.status || 'offline']}`} />
+                <span className={`${styles.headerStatus} ${styles[presenceClass]}`} />
               )}
             </div>
             <div className={styles.headerInfo}>
@@ -262,6 +315,19 @@ export default function ChatWindow({ conversationId }) {
             </div>
           </div>
           <div className={styles.headerActions}>
+            {!isGroup && (
+              <button
+                className={styles.compatibilityBtn}
+                type="button"
+                onClick={async () => {
+                  await fetchCompatibility()
+                  setShowCompatibilityPopup(true)
+                }}
+                title="View compatibility analysis"
+              >
+                {compatibilityLoading ? '…' : `Compat ${compatibilityScore ?? '--'}`}
+              </button>
+            )}
             {isGroup && (
               <>
                 <button
@@ -394,7 +460,7 @@ export default function ChatWindow({ conversationId }) {
             <div className={styles.inputWrap}>
               <textarea
                 ref={inputRef}
-                className={styles.input}
+                className={`${styles.input  }`}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -459,6 +525,82 @@ export default function ChatWindow({ conversationId }) {
           onClose={() => setShowGroupSettings(false)}
           onUpdated={(updated) => setConversation(updated)}
         />
+      )}
+
+      {!isGroup && showCompatibilityPopup && (
+        <div className={styles.compatibilityOverlay} onClick={() => setShowCompatibilityPopup(false)}>
+          <div className={styles.compatibilityModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.compatibilityHeader}>
+              <div>
+                <p className={styles.compatibilityEyebrow}>Compatibility analysis</p>
+                <h3 className={styles.compatibilityTitle}>Live response from the compatibility route</h3>
+              </div>
+              <button
+                className={styles.compatibilityClose}
+                type="button"
+                onClick={() => setShowCompatibilityPopup(false)}
+                aria-label="Close compatibility popup"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.compatibilityBody}>
+              {compatibilityLoading ? (
+                <p className={styles.compatibilityHint}>Loading latest compatibility data…</p>
+              ) : compatibilityData ? (
+                <div className={styles.compatibilityContent}>
+                  <section className={styles.compatibilityHero}>
+                    <div>
+                      <p className={styles.compatibilityEyebrow}>Compatibility score</p>
+                      <h4 className={styles.compatibilityScoreLabel}>{scorePercent}% match</h4>
+                    </div>
+                    <span className={styles.compatibilityPill}>{compatibilityDetails?.mood || 'Neutral'}</span>
+                  </section>
+
+                  <div className={styles.compatibilityMeter}>
+                    <div className={styles.compatibilityMeterFill} style={{ width: `${scorePercent}%` }} />
+                  </div>
+
+                  <div className={styles.compatibilityChips}>
+                    <span className={styles.compatibilityChip}>Type: {compatibilityDetails?.relationshipType || 'Unknown'}</span>
+                    <span className={styles.compatibilityChip}>Engagement: {compatibilityDetails?.engagementLevel || 'Medium'}</span>
+                    <span className={styles.compatibilityChip}>Mood: {compatibilityDetails?.mood || 'Neutral'}</span>
+                  </div>
+
+                  <div className={styles.compatibilityCards}>
+                    <article className={styles.compatibilityCard}>
+                      <h5 className={styles.compatibilityCardTitle}>What this means</h5>
+                      <p className={styles.compatibilityCardText}>{compatibilityDetails?.futurePrediction || 'No prediction available yet.'}</p>
+                    </article>
+
+                    <article className={styles.compatibilityCard}>
+                      <h5 className={styles.compatibilityCardTitle}>Signal breakdown</h5>
+                      <ul className={styles.compatibilityList}>
+                        <li><strong>Positivity</strong> <span>{analytics?.positivity ?? analytics?.positiveMessages ?? 0}%</span></li>
+                        <li><strong>Dryness</strong> <span>{analytics?.dryness ?? analytics?.dryMessages ?? 0}%</span></li>
+                        <li><strong>Emotional connection</strong> <span>{analytics?.emotionalConnection ?? 0}%</span></li>
+                      </ul>
+                    </article>
+                  </div>
+
+                  {suggestions.length > 0 && (
+                    <article className={styles.compatibilityCard}>
+                      <h5 className={styles.compatibilityCardTitle}>Suggested reply</h5>
+                      <ul className={styles.compatibilitySuggestionList}>
+                        {suggestions.map((item, idx) => (
+                          <li key={`${item}-${idx}`}>{item}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  )}
+                </div>
+              ) : (
+                <p className={styles.compatibilityHint}>No compatibility data available yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

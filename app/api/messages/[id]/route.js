@@ -31,8 +31,6 @@ export async function DELETE(req, { params }) {
 
     message.deleted = true
     message.content = ''
-    message.mediaUrl = null
-    message.audioUrl = null
     await message.save()
 
     await pusherServer.trigger(

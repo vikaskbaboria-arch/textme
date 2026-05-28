@@ -20,6 +20,11 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
 
   // Generate share link on mount
   useEffect(() => {
+    if (message.deleted) {
+      setStep('error')
+      return
+    }
+
     async function createLink() {
       setStep('loading')
       try {
@@ -38,7 +43,7 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
       }
     }
     createLink()
-  }, [message._id])
+  }, [message._id, message.deleted])
 
   // ── Actions ─────────────────────────────────────────────────
   async function copyLink() {
@@ -67,14 +72,27 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
     onClose()
   }
 
+  function getShareText(includeMediaLink = false) {
+    if (message.type === 'image' || message.type === 'video') {
+      const label = message.type === 'image' ? '📷 Shared image' : '🎥 Shared video'
+      const caption = message.content ? `${message.content}` : ''
+      return includeMediaLink && message.mediaUrl
+        ? [label, caption, message.mediaUrl].filter(Boolean).join('\n')
+        : [label, caption].filter(Boolean).join('\n')
+    }
+
+    return message.content || 'Shared message from textMe'
+  }
+
   function buildEmailBody() {
     const lines = []
     lines.push(`${message.sender?.name || 'Someone'} shared a message with you on textMe:`)
     lines.push('')
-    if (message.content) lines.push(`"${message.content}"`)
-    if (message.mediaUrl) lines.push(`Media: ${message.mediaUrl}`)
-    lines.push('')
-    lines.push(`View the full message: ${shareUrl}`)
+    if (message.type === 'image' || message.type === 'video') {
+      lines.push(getShareText(true))
+    } else {
+      lines.push(`"${getShareText(false)}"`)
+    }
     lines.push('')
     lines.push('— Sent via textMe')
     return lines.join('\n')
@@ -83,12 +101,38 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
   async function nativeShare() {
     if (!navigator.share) return
     try {
-      const shareData = {
-        title: `Message from ${message.sender?.name || 'Someone'} on textMe`,
-        text: message.content || (message.type === 'image' ? '📷 Image' : '🎥 Video'),
-        url: shareUrl,
+      const shareTitle = `Message from ${message.sender?.name || 'Someone'} on textMe`
+      const shareText = message.type === 'image' || message.type === 'video'
+        ? (message.content || (message.type === 'image' ? '📷 Shared image' : '🎥 Shared video'))
+        : message.content || (message.type === 'audio' ? '🎙 Shared voice note' : 'Shared message from textMe')
+
+      if ((message.type === 'image' || message.type === 'video') && message.mediaUrl) {
+        const response = await fetch(message.mediaUrl)
+        const blob = await response.blob()
+        const fileName = message.type === 'image'
+          ? `shared-image-${Date.now()}.jpg`
+          : `shared-video-${Date.now()}.mp4`
+        const file = new File([blob], fileName, {
+          type: blob.type || (message.type === 'image' ? 'image/jpeg' : 'video/mp4'),
+        })
+
+        if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: shareTitle,
+            text: shareText,
+            files: [file],
+          })
+          onClose()
+          return
+        }
       }
-      await navigator.share(shareData)
+
+      await navigator.share({
+        title: shareTitle,
+        text: message.type === 'image' || message.type === 'video'
+          ? `${shareText}\n${message.mediaUrl || ''}`.trim()
+          : shareText,
+      })
       onClose()
     } catch (err) {
       if (err.name !== 'AbortError') console.error(err)
@@ -98,6 +142,16 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
   const supportsNativeShare = typeof navigator !== 'undefined' && !!navigator.share
   const isMedia = message.type === 'image' || message.type === 'video'
   const preview = message.content || (message.type === 'image' ? '📷 Image' : message.type === 'video' ? '🎥 Video' : '')
+
+  if (message.deleted) {
+    return (
+      <div className={`${styles.menu} ${isOwn ? styles.menuOwn : ''}`} ref={ref}>
+        <div className={styles.preview}>
+          <p className={styles.previewText}>This message was deleted and can no longer be shared.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`${styles.menu} ${isOwn ? styles.menuOwn : ''}`} ref={ref}>
@@ -194,7 +248,11 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
         <button
           className={styles.option}
           onClick={() => {
-            const text = encodeURIComponent(`${preview ? `"${preview}" — ` : ''}${shareUrl}`)
+            const text = encodeURIComponent(
+              message.type === 'image' || message.type === 'video'
+                ? getShareText(true)
+                : preview || 'Shared message from textMe'
+            )
             window.open(`https://wa.me/?text=${text}`, '_blank')
             onClose()
           }}
@@ -214,9 +272,12 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
         <button
           className={styles.option}
           onClick={() => {
-            const text = encodeURIComponent(preview || 'Check this out')
-            const url = encodeURIComponent(shareUrl)
-            window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank')
+            const text = encodeURIComponent(
+              message.type === 'image' || message.type === 'video'
+                ? getShareText(true)
+                : preview || 'Shared message from textMe'
+            )
+            window.open(`https://t.me/share/url?text=${text}`, '_blank')
             onClose()
           }}
           disabled={step === 'loading'}
@@ -234,7 +295,11 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
         <button
           className={styles.option}
           onClick={() => {
-            const text = encodeURIComponent(`${preview ? `"${preview}" ` : ''}${shareUrl}`)
+            const text = encodeURIComponent(
+              message.type === 'image' || message.type === 'video'
+                ? getShareText(true)
+                : preview || 'Shared message from textMe'
+            )
             window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
             onClose()
           }}
