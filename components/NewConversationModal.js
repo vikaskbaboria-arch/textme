@@ -83,7 +83,7 @@ export default function NewConversationModal({ onClose }) {
             </div>
           )}
           {!loading && query.length >= 2 && results.length === 0 && (
-            <div className={styles.statusRow}>No users found for "{query}"</div>
+            <div className={styles.statusRow}>No users found for {query}</div>
           )}
           {results.map(user => (
             <button
