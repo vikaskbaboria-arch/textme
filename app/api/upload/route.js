@@ -21,11 +21,13 @@ export async function POST(req) {
     const dataURI = `data:${mimeType};base64,${base64}`
 
     const isVideo = mimeType.startsWith('video/')
-    const resourceType = isVideo ? 'video' : 'image'
+    const isAudio = mimeType.startsWith('audio/')
+    const resourceType = isVideo ? 'video' : isAudio ? 'audio' : 'image'
+    const cloudResourceType = isVideo || isAudio ? 'video' : 'image'
 
     const result = await cloudinary.uploader.upload(dataURI, {
       folder,
-      resource_type: resourceType,
+      resource_type: cloudResourceType,
       ...(resourceType === 'image' && {
         transformation: [{ quality: 'auto', fetch_format: 'auto', width: 1200, crop: 'limit' }],
       }),

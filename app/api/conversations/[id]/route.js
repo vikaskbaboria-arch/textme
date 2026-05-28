@@ -39,7 +39,7 @@ export async function PATCH(req, { params }) {
 
     const isAdmin = conv.admin?.toString() === session.user.id
     const body = await req.json()
-    const { action, userId, name, avatar, newAdminId } = body
+    const { action, userId, name, avatar, newAdminId, settings } = body
 
     let sysContent = null
 
@@ -82,6 +82,17 @@ export async function PATCH(req, { params }) {
       if (!isAdmin) return NextResponse.json({ error: 'Admin only' }, { status: 403 })
       if (name?.trim()) { conv.name = name.trim(); sysContent = `Group was renamed to "${name.trim()}"` }
       if (avatar !== undefined) conv.avatar = avatar
+    }
+
+    else if (action === 'update_settings') {
+      if (!isAdmin) return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+      conv.settings = {
+        onlyAdminCanMessage: Boolean(settings?.onlyAdminCanMessage),
+        encrypted: Boolean(settings?.encrypted),
+        disappearingMessages: Boolean(settings?.disappearingMessages),
+        disappearAfterMs: settings?.disappearAfterMs ?? null,
+      }
+      sysContent = 'Group settings were updated'
     }
 
     else {

@@ -43,6 +43,12 @@ const ConversationSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    settings: {
+      onlyAdminCanMessage: { type: Boolean, default: false },
+      encrypted: { type: Boolean, default: false },
+      disappearingMessages: { type: Boolean, default: false },
+      disappearAfterMs: { type: Number, default: null },
+    },
     // Track unread counts per user
     unreadCounts: [
       {

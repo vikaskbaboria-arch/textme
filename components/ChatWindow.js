@@ -5,7 +5,9 @@ import { getPusherClient } from '@/lib/pusher'
 import dynamic from 'next/dynamic'
 import MessageBubble from './MessageBubble'
 import GroupInfoPanel from './GroupInfoPanel'
+import GroupSettings from './GroupSettings'
 import EmojiPickerPopup from './EmojiPickerPopup'
+import VoiceRecorder from './VoiceRecorder'
 import styles from './ChatWindow.module.css'
 
 const ACCEPTED = 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime'
@@ -19,7 +21,9 @@ export default function ChatWindow({ conversationId }) {
   const [loading, setLoading] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
   const [showGroupInfo, setShowGroupInfo] = useState(false)
+  const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false)
   const [uploadPreview, setUploadPreview] = useState(null) // { file, previewUrl, type }
   const [uploading, setUploading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -146,6 +150,30 @@ export default function ChatWindow({ conversationId }) {
     setUploadPreview(null)
   }
 
+  async function sendVoiceMessage({ audioUrl, audioDuration }) {
+    if (!conversationId || !audioUrl || sending) return
+    setSending(true)
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId,
+          content: '',
+          type: 'audio',
+          mediaUrl: audioUrl,
+          mediaType: 'audio',
+          mediaDuration: audioDuration,
+        }),
+      })
+      setShowVoiceRecorder(false)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSending(false)
+    }
+  }
+
   function appendEmoji(emoji) {
     setInput(prev => prev + emoji)
     inputRef.current?.focus()
@@ -220,13 +248,22 @@ export default function ChatWindow({ conversationId }) {
           </div>
           <div className={styles.headerActions}>
             {isGroup && (
-              <button
-                className={`${styles.headerBtn} ${showGroupInfo ? styles.headerBtnActive : ''}`}
-                title="Group info"
-                onClick={() => setShowGroupInfo(p => !p)}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-              </button>
+              <>
+                <button
+                  className={`${styles.headerBtn} ${showGroupInfo ? styles.headerBtnActive : ''}`}
+                  title="Group info"
+                  onClick={() => { setShowGroupInfo(p => !p); setShowGroupSettings(false) }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                </button>
+                <button
+                  className={`${styles.headerBtn} ${showGroupSettings ? styles.headerBtnActive : ''}`}
+                  title="Group settings"
+                  onClick={() => { setShowGroupSettings(p => !p); setShowGroupInfo(false) }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.2 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.2 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.2l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.2-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.2-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.2h.1a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.2a1.7 1.7 0 001 1.5h.1a1.7 1.7 0 001.8-.2l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.2 1.8v.1a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.2a1.7 1.7 0 00-1.5 1z"/></svg>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -291,6 +328,15 @@ export default function ChatWindow({ conversationId }) {
           </div>
         )}
 
+        {showVoiceRecorder && (
+          <div className={styles.uploadPreview}>
+            <VoiceRecorder
+              onSend={sendVoiceMessage}
+              onCancel={() => setShowVoiceRecorder(false)}
+            />
+          </div>
+        )}
+
         {/* Input area */}
         <div className={styles.inputArea}>
           <div className={styles.inputRow}>
@@ -302,6 +348,19 @@ export default function ChatWindow({ conversationId }) {
               className={styles.hiddenInput}
               onChange={handleFileChange}
             />
+
+            {/* Voice recorder button */}
+            <button
+              className={styles.toolBtn}
+              onClick={() => setShowVoiceRecorder(p => !p)}
+              title="Record voice note"
+              type="button"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+              </svg>
+            </button>
 
             {/* Attachment button */}
             <button
@@ -374,6 +433,14 @@ export default function ChatWindow({ conversationId }) {
         <GroupInfoPanel
           conversation={conversation}
           onClose={() => setShowGroupInfo(false)}
+          onUpdated={(updated) => setConversation(updated)}
+        />
+      )}
+
+      {isGroup && showGroupSettings && conversation && (
+        <GroupSettings
+          conversation={conversation}
+          onClose={() => setShowGroupSettings(false)}
           onUpdated={(updated) => setConversation(updated)}
         />
       )}

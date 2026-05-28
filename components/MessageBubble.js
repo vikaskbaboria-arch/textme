@@ -33,6 +33,7 @@ export default function MessageBubble({ message, isOwn, showSender, isSystemMsg 
 
   const sender = message.sender
   const isMedia = message.type === 'image' || message.type === 'video'
+  const isAudio = message.type === 'audio'
 
   return (
     <>
@@ -51,7 +52,26 @@ export default function MessageBubble({ message, isOwn, showSender, isSystemMsg 
             <span className={styles.senderName}>{sender.name}</span>
           )}
 
-          {isMedia ? (
+          {isAudio ? (
+            <div className={`${styles.audioBubble} ${isOwn ? styles.audioBubbleOwn : styles.audioBubbleOther}`}>
+              <div className={styles.audioHeader}>🎙 Voice message</div>
+              <audio controls src={message.mediaUrl} className={styles.audioPlayer} />
+              {message.mediaDuration && (
+                <span className={styles.audioDuration}>{formatDuration(message.mediaDuration)}</span>
+              )}
+              <div className={styles.metaMedia}>
+                <span className={styles.time}>{formatTime(message.createdAt)}</span>
+                {isOwn && (
+                  <span className={styles.readCheck}>
+                    <svg width="14" height="10" viewBox="0 0 20 12" fill="none">
+                      <path d="M1 6L6 11L13 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M7 6L12 11L19 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : isMedia ? (
             <div
               className={`${styles.mediaBubble} ${isOwn ? styles.mediaBubbleOwn : styles.mediaBubbleOther}`}
               onClick={() => setLightbox({ url: message.mediaUrl, type: message.mediaType })}
@@ -112,7 +132,7 @@ export default function MessageBubble({ message, isOwn, showSender, isSystemMsg 
             <div className={`${styles.bubble} ${isOwn ? styles.bubbleOwn : styles.bubbleOther}`}>
               {message.deleted
                 ? <span className={styles.deleted}>This message was deleted</span>
-                : <span className={styles.content}>{message.content}</span>
+                : <span className={styles.content}>{message.content || (message.type === 'audio' ? 'Voice message' : '')}</span>
               }
               <div className={styles.meta}>
                 <span className={styles.time}>{formatTime(message.createdAt)}</span>
