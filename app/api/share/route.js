@@ -19,7 +19,6 @@ export async function POST(req) {
     // Verify message exists and user is a participant
     const message = await Message.findById(messageId).populate('sender', 'name avatar')
     if (!message) return NextResponse.json({ error: 'Message not found' }, { status: 404 })
-    if (message.deleted) return NextResponse.json({ error: 'Cannot share deleted message' }, { status: 400 })
 
     const conv = await Conversation.findOne({
       _id: message.conversationId,
@@ -27,8 +26,8 @@ export async function POST(req) {
     })
     if (!conv) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    // Reuse existing share token only for this user and message
-    const existing = await SharedMessage.findOne({ messageId, sharedBy: session.user.id })
+    // Reuse existing share token if already created for this message
+    const existing = await SharedMessage.findOne({ messageId })
     if (existing) {
       return NextResponse.json({ token: existing.token, messageId })
     }
@@ -64,20 +63,16 @@ export async function GET(req) {
     if (!shared) return NextResponse.json({ error: 'Not found or expired' }, { status: 404 })
 
     // Increment view count
-    const updatedShared = await SharedMessage.findByIdAndUpdate(
-      shared._id,
-      { $inc: { views: 1 } },
-      { new: true }
-    )
+    await SharedMessage.findByIdAndUpdate(shared._id, { $inc: { views: 1 } })
 
     return NextResponse.json({
-      senderName: updatedShared.senderName,
-      content: updatedShared.content,
-      type: updatedShared.type,
-      mediaUrl: updatedShared.mediaUrl,
-      mediaType: updatedShared.mediaType,
-      createdAt: updatedShared.createdAt,
-      views: updatedShared.views,
+      senderName: shared.senderName,
+      content: shared.content,
+      type: shared.type,
+      mediaUrl: shared.mediaUrl,
+      mediaType: shared.mediaType,
+      createdAt: shared.createdAt,
+      views: shared.views + 1,
     })
   } catch (err) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
