@@ -37,6 +37,18 @@ const UserSchema = new mongoose.Schema(
       enum: ['online', 'offline', 'away'],
       default: 'offline',
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      default: null,
+    },
+    otpExpiry: {
+      type: Date,
+      default: null,
+    },
     lastSeen: {
       type: Date,
       default: Date.now,

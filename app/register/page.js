@@ -8,12 +8,16 @@ import styles from '../login/auth.module.css'
 export default function RegisterPage() {
   const router = useRouter()
   const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [verifyStep, setVerifyStep] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setSuccess('')
     setLoading(true)
 
     const res = await fetch('/api/users', {
@@ -29,7 +33,32 @@ export default function RegisterPage() {
       return
     }
 
-    // Auto-login after register
+    const data = await res.json()
+    setSuccess(data.message || 'Verification code sent to your email.')
+    setVerifyStep(true)
+    setLoading(false)
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
+    const res = await fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: form.email, otp }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.error || 'OTP verification failed')
+      setLoading(false)
+      return
+    }
+
     await signIn('credentials', {
       redirect: false,
       email: form.email,
@@ -38,6 +67,23 @@ export default function RegisterPage() {
 
     router.push('/')
     router.refresh()
+  }
+
+  async function handleResendOtp() {
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: form.email }),
+    })
+
+    const data = await res.json()
+    setLoading(false)
+    setSuccess(data.message || 'A new verification code has been sent.')
+    if (!res.ok) setError(data.error || 'Unable to resend OTP')
   }
 
   return (
@@ -59,8 +105,10 @@ export default function RegisterPage() {
         <p className={styles.subtitle}>Start messaging instantly</p>
 
         {error && <div className={styles.errorBanner}>{error}</div>}
+        {success && <div className={styles.successBanner}>{success}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        {!verifyStep ? (
+          <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label className={styles.label}>Full name</label>
             <input
@@ -104,6 +152,31 @@ export default function RegisterPage() {
             {loading ? <span className="spinner" /> : 'Create account'}
           </button>
         </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label}>Verification code</label>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="Enter 6-digit code"
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                required
+                inputMode="numeric"
+                autoComplete="one-time-code"
+              />
+            </div>
+
+            <button type="submit" className={styles.btn} disabled={loading}>
+              {loading ? <span className="spinner" /> : 'Verify email'}
+            </button>
+
+            <button type="button" className={styles.linkBtn} onClick={handleResendOtp} disabled={loading}>
+              Resend code
+            </button>
+          </form>
+        )}
 
         <p className={styles.switchLink}>
           Already have an account?{' '}

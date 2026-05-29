@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import dbConnect from '@/lib/mongoose'
 import User from '@/models/User'
+import { generateOtp } from '@/lib/generateOtp'
+import { sendEmail } from '@/lib/mailer'
 
 // POST /api/users/register
 export async function POST(req) {
@@ -19,10 +21,34 @@ export async function POST(req) {
     }
 
     const hashed = await bcrypt.hash(password, 12)
-    const user = await User.create({ name, email: email.toLowerCase(), password: hashed })
+    const otp = generateOtp()
+    const user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password: hashed,
+      isVerified: false,
+      otp,
+      otpExpiry: new Date(Date.now() + 5 * 60 * 1000),
+    })
+
+    try {
+      await sendEmail(
+        user.email,
+        'Verify your email - textMe',
+        `Your verification code is ${otp}. It will expire in 5 minutes.`
+      )
+    } catch (mailError) {
+      console.error('REGISTRATION_EMAIL_ERROR', mailError)
+    }
 
     return NextResponse.json(
-      { id: user._id, name: user.name, email: user.email },
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        requiresVerification: true,
+        message: 'Account created. Please verify your email with the OTP sent to your inbox.',
+      },
       { status: 201 }
     )
   } catch (err) {

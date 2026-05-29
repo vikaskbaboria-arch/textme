@@ -22,11 +22,16 @@ export const authOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.password)
         if (!isValid) throw new Error('Incorrect password')
 
+        if (!user.isVerified) {
+          throw new Error('Please verify your email before signing in.')
+        }
+
         return {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
           avatar: user.avatar,
+          isVerified: user.isVerified,
         }
       },
     }),
@@ -36,6 +41,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id
         token.avatar = user.avatar
+        token.isVerified = user.isVerified
       }
       return token
     },
@@ -43,6 +49,7 @@ export const authOptions = {
       if (token) {
         session.user.id = token.id
         session.user.avatar = token.avatar
+        session.user.isVerified = token.isVerified
       }
       return session
     },

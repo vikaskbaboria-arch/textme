@@ -64,6 +64,16 @@
   margin-bottom: 20px;
 }
 
+.successBanner {
+  background: rgba(45, 212, 191, 0.12);
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  color: var(--text-primary);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -153,4 +163,20 @@
 
 .link:hover {
   opacity: 0.75;
+}
+
+.linkBtn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+}
+
+.linkBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
