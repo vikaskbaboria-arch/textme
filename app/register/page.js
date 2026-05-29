@@ -98,7 +98,7 @@ export default function RegisterPage() {
             <circle cx="24" cy="22" r="1.5" fill="#2dd4bf" />
             <circle cx="29" cy="22" r="1.5" fill="#2dd4bf" />
           </svg>
-          <h1 className={styles.brandName}>textMe</h1>
+          <h1 className={styles.brandName}>spike</h1>
         </div>
 
         <h2 className={styles.title}>Create account</h2>

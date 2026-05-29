@@ -65,7 +65,7 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
   }
 
   function openEmail() {
-    const subject = encodeURIComponent(`Message from textMe`)
+    const subject = encodeURIComponent(`Message from spike`)
     const body = encodeURIComponent(buildEmailBody())
     const to = encodeURIComponent(emailTo)
     window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_blank')
@@ -81,12 +81,12 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
         : [label, caption].filter(Boolean).join('\n')
     }
 
-    return message.content || 'Shared message from textMe'
+    return message.content || 'Shared message from spike'
   }
 
   function buildEmailBody() {
     const lines = []
-    lines.push(`${message.sender?.name || 'Someone'} shared a message with you on textMe:`)
+    lines.push(`${message.sender?.name || 'Someone'} shared a message with you on spike:`)
     lines.push('')
     if (message.type === 'image' || message.type === 'video') {
       lines.push(getShareText(true))
@@ -94,17 +94,17 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
       lines.push(`"${getShareText(false)}"`)
     }
     lines.push('')
-    lines.push('— Sent via textMe')
+    lines.push('— Sent via spike')
     return lines.join('\n')
   }
 
   async function nativeShare() {
     if (!navigator.share) return
     try {
-      const shareTitle = `Message from ${message.sender?.name || 'Someone'} on textMe`
+      const shareTitle = `Message from ${message.sender?.name || 'Someone'} on spike`
       const shareText = message.type === 'image' || message.type === 'video'
         ? (message.content || (message.type === 'image' ? '📷 Shared image' : '🎥 Shared video'))
-        : message.content || (message.type === 'audio' ? '🎙 Shared voice note' : 'Shared message from textMe')
+        : message.content || (message.type === 'audio' ? '🎙 Shared voice note' : 'Shared message from spike')
 
       if ((message.type === 'image' || message.type === 'video') && message.mediaUrl) {
         const response = await fetch(message.mediaUrl)
@@ -251,7 +251,7 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
             const text = encodeURIComponent(
               message.type === 'image' || message.type === 'video'
                 ? getShareText(true)
-                : preview || 'Shared message from textMe'
+                : preview || 'Shared message from spike'
             )
             window.open(`https://wa.me/?text=${text}`, '_blank')
             onClose()
@@ -275,7 +275,7 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
             const text = encodeURIComponent(
               message.type === 'image' || message.type === 'video'
                 ? getShareText(true)
-                : preview || 'Shared message from textMe'
+                : preview || 'Shared message from spike'
             )
             window.open(`https://t.me/share/url?text=${text}`, '_blank')
             onClose()
@@ -298,7 +298,7 @@ export default function ShareMessageMenu({ message, isOwn, onClose }) {
             const text = encodeURIComponent(
               message.type === 'image' || message.type === 'video'
                 ? getShareText(true)
-                : preview || 'Shared message from textMe'
+                : preview || 'Shared message from spike'
             )
             window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
             onClose()

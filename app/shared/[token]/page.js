@@ -15,15 +15,15 @@ async function getSharedMessage(token) {
 
 export async function generateMetadata({ params }) {
   const msg = await getSharedMessage(params.token)
-  if (!msg) return { title: 'Message not found — textMe' }
+  if (!msg) return { title: 'Message not found — spike' }
   const desc = msg.content
     ? msg.content.slice(0, 120)
     : msg.type === 'image' ? 'Shared an image' : 'Shared a video'
   return {
-    title: `${msg.senderName} on textMe`,
+    title: `${msg.senderName} on spike`,
     description: desc,
     openGraph: {
-      title: `${msg.senderName} on textMe`,
+      title: `${msg.senderName} on spike`,
       description: desc,
       ...(msg.mediaUrl && msg.type === 'image' && { images: [{ url: msg.mediaUrl }] }),
     },
@@ -71,7 +71,7 @@ export default async function SharedMessagePage({ params }) {
           <div className={styles.senderAvatar}>{getInitials(msg.senderName)}</div>
           <div className={styles.senderInfo}>
             <span className={styles.senderName}>{msg.senderName}</span>
-            <span className={styles.sentOn}>shared on textMe · {formatDate(msg.createdAt)}</span>
+            <span className={styles.sentOn}>shared on spike · {formatDate(msg.createdAt)}</span>
           </div>
         </div>
 
@@ -132,7 +132,7 @@ function Brand() {
         <circle cx="24" cy="22" r="1.5" fill="#2dd4bf"/>
         <circle cx="29" cy="22" r="1.5" fill="#2dd4bf"/>
       </svg>
-      <span>Sent via <strong>textMe</strong></span>
+      <span>Sent via <strong>spike</strong></span>
     </a>
   )
 }

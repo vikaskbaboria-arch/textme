@@ -32,7 +32,7 @@ export default function Sidebar() {
               <circle cx="24" cy="22" r="1.5" fill="#2dd4bf" />
               <circle cx="29" cy="22" r="1.5" fill="#2dd4bf" />
             </svg>
-            <span className={styles.brandName}>textMe</span>
+            <span className={styles.brandName}>spike</span>
           </div>
 
           <div className={styles.headerActions}>

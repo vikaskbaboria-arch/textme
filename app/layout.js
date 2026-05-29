@@ -2,7 +2,7 @@ import './globals.css'
 import AuthProvider from '@/components/AuthProvider'
 
 export const metadata = {
-  title: 'textMe',
+  title: '',
   description: 'Real-time messaging for everyone',
 }
 

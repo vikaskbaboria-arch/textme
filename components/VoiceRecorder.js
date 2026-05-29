@@ -78,7 +78,7 @@ export default function VoiceRecorder({ onSend, onCancel }) {
     // Upload to Cloudinary
     const formData = new FormData()
     formData.append('file', audioBlob, 'voice.webm')
-    formData.append('folder', 'textme/voice')
+    formData.append('folder', 'spike/voice')
 
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: formData })

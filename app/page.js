@@ -23,7 +23,7 @@ export default async function Home() {
               <circle cx="29" cy="22" r="1.5" fill="#2dd4bf" />
             </svg>
           </div>
-          <h2 className={styles.emptyTitle}>textMe</h2>
+          <h2 className={styles.emptyTitle}>spike</h2>
           <p className={styles.emptyDesc}>Select a conversation or start a new one</p>
         </div>
       </main>

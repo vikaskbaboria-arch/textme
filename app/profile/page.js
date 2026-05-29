@@ -54,7 +54,7 @@ export default function ProfilePage() {
         setUploading(true)
         const fd = new FormData()
         fd.append('file', avatarFile)
-        fd.append('folder', 'textme/avatars')
+        fd.append('folder', 'spike/avatars')
         const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd })
         if (!uploadRes.ok) throw new Error('Avatar upload failed')
         const uploaded = await uploadRes.json()

@@ -113,7 +113,7 @@ export default function ChatWindow({ conversationId }) {
     }
   }, [conversationId, session?.user?.id])
 
-  async function sendTextMessage() {
+  async function sendspikessage() {
     const text = input.trim()
     if (!text || sending) return
     setInput('')
@@ -135,7 +135,7 @@ export default function ChatWindow({ conversationId }) {
       // 1. Upload to Cloudinary
       const formData = new FormData()
       formData.append('file', uploadPreview.file)
-      formData.append('folder', 'textme/media')
+      formData.append('folder', 'spike/media')
       const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
       if (!uploadRes.ok) throw new Error('Upload failed')
       const uploaded = await uploadRes.json()
@@ -168,7 +168,7 @@ export default function ChatWindow({ conversationId }) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (uploadPreview) sendMediaMessage()
-      else sendTextMessage()
+      else sendspikessage()
     }
   }
 
@@ -496,7 +496,7 @@ export default function ChatWindow({ conversationId }) {
             {/* Send button */}
             <button
               className={`${styles.sendBtn} ${canSend ? styles.sendActive : ''}`}
-              onClick={uploadPreview ? sendMediaMessage : sendTextMessage}
+              onClick={uploadPreview ? sendMediaMessage : sendspikessage}
               disabled={!canSend}
             >
               {uploading

@@ -93,7 +93,7 @@ export default function GroupInfoPanel({ conversation, onClose, onUpdated }) {
     try {
       const fd = new FormData()
       fd.append('file', avatarFile)
-      fd.append('folder', 'textme/group-avatars')
+      fd.append('folder', 'spike/group-avatars')
       const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd })
       if (!uploadRes.ok) throw new Error('Group photo upload failed')
       const uploaded = await uploadRes.json()
